@@ -1,110 +1,82 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import Searchbar from '../Searchbar/Searchbar';
 import ImageGallery from '../ImageGallery/ImageGallery';
 import Loader from '../Loader/Loader';
 import LoadMoreBtn from '../Button/Button';
-import Modal from '../Modal/Modal';
 import SearchImages from 'services/pixabay-api';
 import { AppContainer } from '../App/App.styled';
 import { Error } from '../Error/Error.styled';
 
-class App extends Component {
-  state = {
-    value: '',
-    page: 1,
-    images: [],
-    isLoading: false,
-    error: null,
-    isEmpty: false,
-    showBtn: false,
-    showModal: false,
-    largeImageURL: '',
-    tags: '',
-  };
+const App = () => {
+  const [value, setValue] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, SetError] = useState(null);
+  const [isEmpty, setIsEmpty] = useState(false);
+  const [showBtn, setShowBtn] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { value, page } = this.state;
+  useEffect(() => {
+    if (value === '') return;
 
-    if (prevState.value !== value || prevState.page !== page) {
-      this.setState({ isLoading: true });
-      SearchImages(value, page)
-        .then(({ hits, totalHits }) => {
-          if (!hits.length) {
-            this.setState({ isEmpty: true });
-            return;
-          }
-          this.setState(prevState => ({
-            images: [...prevState.images, ...hits],
-            showBtn: page < Math.ceil(totalHits / 12),
-          }));
-        })
-        .catch(error => {
-          this.setState({ error });
-        })
-        .finally(() => this.setState({ isLoading: false }));
+    setIsLoading(true);
+    SearchImages(value, page)
+      .then(({ hits, totalHits }) => {
+        if (!hits.length) {
+          setIsEmpty(true);
+          return;
+        }
+        setImages(prevImages => [...prevImages, ...hits]);
+        setShowBtn(page < Math.ceil(totalHits / 12));
+      })
+      .catch(error => {
+        SetError(error);
+      })
+      .finally(() => setIsLoading(false));
+  }, [value, page]);
+
+  const handleSubmit = query => {
+    if (query === value) {
+      return notify();
     }
-  }
-
-  openModal = (largeImageURL, tags) => {
-    this.setState({ showModal: true, largeImageURL, tags });
+    setValue(query);
+    setPage(1);
+    setImages([]);
+    setIsEmpty(false);
+    setShowBtn(false);
+    SetError(null);
   };
-  closeModal = () => {
-    this.setState({ showModal: false });
-  };
 
-  handleSubmit = value => {
-    this.setState({
-      value,
-      page: 1,
-      images: [],
-      isEmpty: false,
-      showBtn: false,
-      error: null,
-      showModal: false,
-      largeImageURL: '',
+  const notify = () => {
+    toast.error('Please enter new query request', {
+      position: 'top-right',
+      autoClose: 2500,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: 0,
+      theme: 'colored',
     });
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const {
-      images,
-      isLoading,
-      error,
-      isEmpty,
-      showBtn,
-      showModal,
-      largeImageURL,
-      tags,
-    } = this.state;
-
-    return (
-      <AppContainer>
-        <Searchbar onSubmit={this.handleSubmit} />
-        {isLoading && <Loader />}
-        {error && <Error>{error.message}</Error>}
-        {isEmpty && <Error>No images found</Error>}
-        <ImageGallery
-          images={images}
-          openModal={this.openModal}
-          closeModal={this.closeModal}
-        />
-        {showBtn && <LoadMoreBtn handleLoadMore={this.handleLoadMore} />}
-        {showModal && (
-          <Modal
-            tags={tags}
-            largeImageURL={largeImageURL}
-            closeModal={this.closeModal}
-          />
-        )}
-        <ToastContainer autoClose={2500} />
-      </AppContainer>
-    );
-  }
-}
+  return (
+    <AppContainer>
+      <Searchbar onSubmit={handleSubmit} />
+      {isLoading && <Loader />}
+      {error && <Error>{error.message}</Error>}
+      {isEmpty && <Error>No images found</Error>}
+      <ImageGallery images={images} />
+      {showBtn && <LoadMoreBtn handleLoadMore={handleLoadMore} />}
+      <ToastContainer autoClose={2500} />
+    </AppContainer>
+  );
+};
 
 export default App;
