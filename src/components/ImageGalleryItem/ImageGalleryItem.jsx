@@ -6,8 +6,6 @@ import { GalleryItem, GalleryImg } from './ImageGalleryItem.styled';
 const ImageGalleryItem = ({ webformatURL, largeImageURL, tags }) => {
   const [showModal, setShowModal] = useState(false);
 
-  const closeModal = () => setShowModal(false);
-
   return (
     <GalleryItem onClick={() => setShowModal(true)}>
       <GalleryImg src={webformatURL} alt={tags} />
@@ -15,7 +13,7 @@ const ImageGalleryItem = ({ webformatURL, largeImageURL, tags }) => {
         <Modal
           tags={tags}
           largeImageURL={largeImageURL}
-          closeModal={closeModal}
+          closeModal={() => setShowModal(false)}
         />
       )}
     </GalleryItem>
