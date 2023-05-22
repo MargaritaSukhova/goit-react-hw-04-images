@@ -17,9 +17,9 @@ const Modal = ({ tags, largeImageURL, closeModal }) => {
   }, [closeModal]);
 
   const handleBackdropClick = e => {
-    console.log(e.currentTarget);
-    console.log(e.target);
-    if (e.currentTarget === e.target) closeModal();
+    if (e.currentTarget === e.target) {
+      closeModal();
+    }
   };
 
   return createPortal(
